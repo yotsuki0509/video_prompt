@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 影片導演工作台 (社群加強版)</title>
+    <title>AI 影片導演工作台 (安全版)</title>
     <style>
         :root {
-            --primary: #6366f1; /* 改用稍微活潑一點的紫色 */
+            --primary: #6366f1;
             --bg: #f8fafc;
             --card-bg: #ffffff;
             --text: #334155;
             --accent: #10b981;
+            --danger: #ef4444;
         }
         body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); padding: 20px; line-height: 1.6; }
         .container { max-width: 1100px; margin: 0 auto; }
@@ -36,6 +37,12 @@
         input, textarea, select { width: 100%; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; box-sizing: border-box; transition: 0.2s; background: #f8fafc; }
         input:focus, textarea:focus, select:focus { border-color: var(--primary); outline: none; background: white; }
         textarea { resize: vertical; }
+
+        /* API Key Input Specifics */
+        .api-key-group { background: #fee2e2; padding: 15px; border-radius: 12px; border: 2px dashed #fca5a5; margin-bottom: 25px; }
+        .api-key-group label { color: #b91c1c; display: flex; justify-content: space-between; align-items: center; }
+        .api-key-group input { border-color: #fca5a5; background: #fff; }
+        .saved-badge { font-size: 11px; background: #10b981; color: white; padding: 2px 6px; border-radius: 4px; display: none; }
         
         /* Button */
         .btn-primary { width: 100%; background: var(--primary); color: white; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; box-shadow: 0 4px 15px -3px rgba(99, 102, 241, 0.3); }
@@ -69,8 +76,8 @@
 
 <div class="container">
     <div class="header">
-        <h1>🎬 AI 影片導演工作台 (社群加強版)</h1>
-        <p>一鍵生成：分鏡腳本 + 雙語標題 + Hashtags + 互動引導語</p>
+        <h1>🎬 AI 影片導演工作台</h1>
+        <p>安全版：API Key 將儲存於您的瀏覽器中，不會上傳伺服器</p>
     </div>
 
     <div style="text-align: center;">
@@ -82,6 +89,18 @@
 
     <div class="dashboard">
         <div class="sidebar">
+            
+            <div class="api-key-group">
+                <label>
+                    🔑 Gemini API Key 
+                    <span id="keyStatus" class="saved-badge">已儲存</span>
+                </label>
+                <input type="password" id="apiKeyInput" placeholder="貼上您的 API Key (AI Studio)" onchange="saveKey()">
+                <small style="color:#b91c1c; font-size:12px; margin-top:5px; display:block;">
+                    *此 Key 僅儲存於您的瀏覽器 (Local Storage)，重新整理後無需再輸入。
+                </small>
+            </div>
+
             <div class="form-group">
                 <label>🎨 視覺風格 (Visual Style)</label>
                 <select id="styleSelect">
@@ -96,13 +115,12 @@
             <div id="story-inputs">
                 <div class="form-group">
                     <label>📖 故事大綱 (Story Concept)</label>
-                    <textarea id="storyPrompt" rows="5" placeholder="例如：一隻迷路的小狐狸在雪地裡尋找回家的路，途中遇到了一位好心的守林人..."></textarea>
+                    <textarea id="storyPrompt" rows="5" placeholder="例如：一隻迷路的小狐狸在雪地裡尋找回家的路..."></textarea>
                 </div>
                 
                 <div class="form-group">
                     <label>🔒 主角/場景鎖定 (Consistency Anchor)</label>
-                    <input type="text" id="characterAnchor" placeholder="例如：Cute small red fox with a blue knitted scarf" value="">
-                    <small style="color:#64748b; font-size:13px;">💡 重要：請詳細描述主角特徵，AI 會強制每一幕都加上此描述以維持連戲。</small>
+                    <input type="text" id="characterAnchor" placeholder="例如：Cute small red fox with a blue knitted scarf">
                 </div>
 
                 <div class="form-group">
@@ -132,7 +150,6 @@
             </div>
 
             <button class="btn-primary" onclick="generateScript()">✨ 開始生成完整素材</button>
-            <p style="font-size: 12px; text-align: center; color: #94a3b8; margin-top: 15px;">Powered by Google Gemini Pro/Flash</p>
         </div>
 
         <div class="main-content">
@@ -141,8 +158,7 @@
             </div>
             <div id="results-container">
                 <div style="color: #9ca3af; text-align: center; padding-top: 150px; font-size: 1.2rem;">
-                    👈 請在左側輸入故事並點擊生成<br>
-                    <span style="font-size: 1rem; margin-top: 10px; display: block;">您的社群貼文素材將顯示於此</span>
+                    👈 請先貼上 API Key<br>輸入故事並點擊生成
                 </div>
             </div>
         </div>
@@ -150,13 +166,28 @@
 </div>
 
 <script>
-    // ⚠️⚠️⚠️ 請務必填入您的 API KEY ⚠️⚠️⚠️
-    const API_KEY = "你的_API_KEY_放在這裡"; 
-
     // 固定的互動引導語
     const CTA_PHRASE = "\n\nIf you have a story you want to see, please leave a comment and let me know! I will consider turning your text into the main storyline!";
-
     let currentMode = 'story';
+
+    // 🟢 初始化：檢查是否有儲存的 API Key
+    window.onload = function() {
+        const savedKey = localStorage.getItem("gemini_api_key");
+        if (savedKey) {
+            document.getElementById("apiKeyInput").value = savedKey;
+            document.getElementById("keyStatus").style.display = "inline-block";
+        }
+    }
+
+    // 🟢 儲存 Key 到 LocalStorage
+    function saveKey() {
+        const key = document.getElementById("apiKeyInput").value.trim();
+        if (key) {
+            localStorage.setItem("gemini_api_key", key);
+            document.getElementById("keyStatus").style.display = "inline-block";
+            document.getElementById("keyStatus").innerText = "已儲存";
+        }
+    }
 
     function switchMode(mode) {
         currentMode = mode;
@@ -167,7 +198,14 @@
     }
 
     async function generateScript() {
-        if (API_KEY === "AIzaSyBhHLzkIsuHhyi5Kbidej1Z-LI88lCzYDY" || !API_KEY) return alert("🚨 請先在程式碼第 188 行填入您的 Google Gemini API KEY！");
+        // 1. 從輸入框獲取 Key，而不是從程式碼寫死
+        const API_KEY = document.getElementById("apiKeyInput").value.trim();
+
+        if (!API_KEY) {
+            alert("🚨 請先在左上角的紅色框框中貼上您的 Google Gemini API KEY！");
+            document.getElementById("apiKeyInput").focus();
+            return;
+        }
 
         const container = document.getElementById('results-container');
         const loader = document.getElementById('loading');
@@ -179,7 +217,6 @@
 
         let prompt = "";
 
-        // 建構給 Gemini 的超級指令
         if (currentMode === 'story') {
             const story = document.getElementById('storyPrompt').value;
             const anchor = document.getElementById('characterAnchor').value;
@@ -200,9 +237,9 @@
                 Required Outputs:
                 1.  **Titles:** One catchy title in English, one in Traditional Chinese.
                 2.  **Hashtags:** 5-8 relevant hashtags (mixed EN/ZH).
-                3.  **Scene Prompts:** ${days} detailed video generation prompts, progressively telling the story. Each must include camera, lighting, and the anchor description.
+                3.  **Scene Prompts:** ${days} detailed video generation prompts. Each must include camera, lighting, and the anchor description.
 
-                **STRICT OUTPUT FORMAT (Do not include intro/outro text):**
+                **STRICT OUTPUT FORMAT:**
                 ---TITLE_EN---
                 (English Title)
                 ---TITLE_ZH---
@@ -213,10 +250,8 @@
                 (Detailed prompt for scene 1...)
                 ---SCENE 2---
                 (Detailed prompt for scene 2...)
-                (and so on for all scenes)
             `;
         } else {
-            // 單鏡頭模式的 Prompt 也需要調整以符合新格式
             const single = document.getElementById('singlePrompt').value;
             if(!single) { alert("請輸入畫面描述"); loader.style.display='none'; return; }
             prompt = `
@@ -237,8 +272,7 @@
         }
 
         try {
-            // 使用 gemini-1.5-pro 模型以獲得更好的遵循指令能力 (如果覺得慢可改回 flash)
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${API_KEY}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${API_KEY}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
@@ -247,12 +281,11 @@
             const data = await response.json();
             if (data.error) throw new Error(data.error.message);
             const rawText = data.candidates[0].content.parts[0].text;
-            
             renderNewResults(rawText);
 
         } catch (error) {
             console.error(error);
-            container.innerHTML = `<div style="color:#ef4444; padding: 20px; background: #fee2e2; border-radius: 10px;">🚨 生成失敗: ${error.message}<br>請檢查 API Key 或網絡連線。</div>`;
+            container.innerHTML = `<div style="color:#ef4444; padding: 20px; background: #fee2e2; border-radius: 10px;">🚨 生成失敗: ${error.message}<br>請檢查 API Key 是否正確。</div>`;
         } finally {
             loader.style.display = 'none';
         }
@@ -261,7 +294,6 @@
     function renderNewResults(text) {
         const container = document.getElementById('results-container');
         
-        // 1. 解析資料 (使用正規表達式拆分)
         const titleEnMatch = text.match(/---TITLE_EN---\s*([\s\S]*?)\s*---TITLE_ZH---/);
         const titleZhMatch = text.match(/---TITLE_ZH---\s*([\s\S]*?)\s*---HASHTAGS---/);
         const hashtagsMatch = text.match(/---HASHTAGS---\s*([\s\S]*?)\s*(---SCENE 1---|$)/);
@@ -270,42 +302,31 @@
         const titleZh = titleZhMatch ? titleZhMatch[1].trim() : "生成中...";
         const hashtags = hashtagsMatch ? hashtagsMatch[1].trim() : "";
 
-        // 2. 顯示 Meta 資訊區塊 (標題與 Hashtag)
         const metaBox = document.createElement('div');
         metaBox.className = 'meta-info-box';
         metaBox.innerHTML = `
             <div style="margin-bottom: 15px;">
-                <div class="meta-title">📺 英文標題 (English Title) 
-                    <button class="copy-btn" style="font-size:11px; padding: 3px 8px;" onclick="copyToClipboard(this, \`${titleEn}\`)">複製</button>
-                </div>
+                <div class="meta-title">📺 英文標題 <button class="copy-btn" style="font-size:11px; padding: 3px 8px;" onclick="copyToClipboard(this, \`${titleEn}\`)">複製</button></div>
                 <div class="meta-content">${titleEn}</div>
             </div>
              <div style="margin-bottom: 15px;">
-                <div class="meta-title">🧧 中文標題 (Chinese Title)
-                    <button class="copy-btn" style="font-size:11px; padding: 3px 8px;" onclick="copyToClipboard(this, \`${titleZh}\`)">複製</button>
-                </div>
+                <div class="meta-title">🧧 中文標題 <button class="copy-btn" style="font-size:11px; padding: 3px 8px;" onclick="copyToClipboard(this, \`${titleZh}\`)">複製</button></div>
                 <div class="meta-content">${titleZh}</div>
             </div>
             <div>
-                <div class="meta-title">🏷️ Hashtags
-                    <button class="copy-btn" style="font-size:11px; padding: 3px 8px;" onclick="copyToClipboard(this, \`${hashtags}\`)">複製</button>
-                </div>
+                <div class="meta-title">🏷️ Hashtags <button class="copy-btn" style="font-size:11px; padding: 3px 8px;" onclick="copyToClipboard(this, \`${hashtags}\`)">複製</button></div>
                 <div class="hashtags">${hashtags}</div>
             </div>
         `;
         container.appendChild(metaBox);
 
-        // 3. 解析並顯示分鏡卡片
-        const scenes = text.split(/---SCENE \d+---/).slice(1); // 切割並移除第一個空元素
-        
+        const scenes = text.split(/---SCENE \d+---/).slice(1);
         if (scenes.length === 0 && currentMode === 'single') {
-             // Fallback for single mode if regex fails slightly different layout
              const singleSceneMatch = text.match(/---SCENE 1---\s*([\s\S]*)/);
              if(singleSceneMatch) scenes.push(singleSceneMatch[1]);
         }
 
         scenes.forEach((sceneText, index) => {
-            // 組合最終要複製的文本：提示詞 + CTA
             const finalPromptText = sceneText.trim() + CTA_PHRASE;
             const dayNum = index + 1;
             const card = document.createElement('div');
@@ -316,7 +337,7 @@
                     <button class="copy-btn" onclick="copyToClipboard(this, \`${finalPromptText.replace(/`/g, "\\`")}\`)">📋 複製完整提示詞 (含 CTA)</button>
                 </div>
                 <div class="prompt-text">${sceneText.trim()}</div>
-                <div class="cta-text">👇 已自動附加於結尾 (複製時會包含)：<br>${CTA_PHRASE.trim()}</div>
+                <div class="cta-text">👇 已自動附加於結尾：<br>${CTA_PHRASE.trim()}</div>
             `;
             container.appendChild(card);
         });
@@ -326,13 +347,7 @@
         navigator.clipboard.writeText(text);
         const originalText = btn.innerHTML;
         btn.innerHTML = "✅ 已複製！";
-        btn.style.color = "var(--accent)";
-        btn.style.borderColor = "var(--accent)";
-        setTimeout(() => {
-            btn.innerHTML = originalText;
-            btn.style.color = "";
-            btn.style.borderColor = "";
-        }, 2000);
+        setTimeout(() => btn.innerHTML = originalText, 2000);
     }
 </script>
 
