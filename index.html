@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 影片導演工作台 (安全版)</title>
+    <title>AI 影片導演工作台 (V3 修正版)</title>
     <style>
         :root {
             --primary: #6366f1;
             --bg: #f8fafc;
             --card-bg: #ffffff;
             --text: #334155;
-            --accent: #10b981;
-            --danger: #ef4444;
+            --danger-bg: #fee2e2;
+            --danger-border: #ef4444;
         }
         body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); padding: 20px; line-height: 1.6; }
         .container { max-width: 1100px; margin: 0 auto; }
@@ -38,37 +38,29 @@
         input:focus, textarea:focus, select:focus { border-color: var(--primary); outline: none; background: white; }
         textarea { resize: vertical; }
 
-        /* API Key Input Specifics */
-        .api-key-group { background: #fee2e2; padding: 15px; border-radius: 12px; border: 2px dashed #fca5a5; margin-bottom: 25px; }
-        .api-key-group label { color: #b91c1c; display: flex; justify-content: space-between; align-items: center; }
-        .api-key-group input { border-color: #fca5a5; background: #fff; }
-        .saved-badge { font-size: 11px; background: #10b981; color: white; padding: 2px 6px; border-radius: 4px; display: none; }
-        
+        /* 🔴 API Key 特顯區域 (重點修改) */
+        .api-key-box { 
+            background: var(--danger-bg); 
+            border: 2px dashed var(--danger-border); 
+            padding: 15px; 
+            border-radius: 12px; 
+            margin-bottom: 30px; 
+        }
+        .api-key-box label { color: #b91c1c; display: flex; justify-content: space-between; align-items: center; }
+        .api-key-box input { border: 1px solid var(--danger-border); background: #fff; }
+        .status-badge { font-size: 12px; background: #10b981; color: white; padding: 3px 8px; border-radius: 4px; display: none; }
+
         /* Button */
         .btn-primary { width: 100%; background: var(--primary); color: white; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; box-shadow: 0 4px 15px -3px rgba(99, 102, 241, 0.3); }
         .btn-primary:hover { background: #4f46e5; transform: translateY(-2px); }
-        .btn-primary:active { transform: translateY(0); }
 
-        /* Output Area */
-        .meta-info-box { background: #eff6ff; border: 2px solid #dbeafe; padding: 20px; border-radius: 12px; margin-bottom: 25px; }
-        .meta-title { font-weight: bold; margin-bottom: 5px; color: #1e40af; display: flex; justify-content: space-between; }
-        .meta-content { margin-bottom: 15px; font-size: 1.1rem; }
-        .hashtags { color: var(--primary); font-weight: 600; font-size: 0.95rem; }
-
-        .output-card { background: #f8fafc; border: 2px solid #e2e8f0; padding: 20px; margin-bottom: 20px; border-radius: 12px; position: relative; transition: 0.3s; }
-        .output-card:hover { border-color: #cbd5e1; box-shadow: 0 5px 15px -5px rgba(0,0,0,0.05); }
-        .output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-        .day-badge { background: var(--primary); color: white; padding: 6px 12px; border-radius: 30px; font-size: 13px; font-weight: bold; letter-spacing: 0.5px; }
-        
-        .prompt-text { font-family: 'Courier New', monospace; color: #333; font-size: 14px; white-space: pre-wrap; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .cta-text { margin-top: 15px; font-size: 14px; color: #64748b; font-style: italic; border-top: 1px dashed #cbd5e1; padding-top: 10px; }
-
-        .copy-btn { background: white; border: 2px solid #e2e8f0; color: #475569; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
-        .copy-btn:hover { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
-
-        /* Utilities */
+        /* Output & Utilities */
         .hidden { display: none; }
-        .loading { text-align: center; padding: 60px; color: var(--primary); font-weight: bold; display: none; font-size: 1.2rem; }
+        .output-card { background: #f8fafc; border: 2px solid #e2e8f0; padding: 20px; margin-bottom: 20px; border-radius: 12px; }
+        .prompt-text { font-family: monospace; white-space: pre-wrap; background: white; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .loading { text-align: center; padding: 50px; display: none; color: var(--primary); font-weight: bold; }
+        .copy-btn { float: right; cursor: pointer; background: white; border: 1px solid #ccc; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        
         @media (max-width: 900px) { .dashboard { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -76,8 +68,8 @@
 
 <div class="container">
     <div class="header">
-        <h1>🎬 AI 影片導演工作台</h1>
-        <p>安全版：API Key 將儲存於您的瀏覽器中，不會上傳伺服器</p>
+        <h1>🎬 AI 影片導演工作台 (V3)</h1>
+        <p>請先在下方紅色框框內輸入您的 API Key</p>
     </div>
 
     <div style="text-align: center;">
@@ -90,45 +82,41 @@
     <div class="dashboard">
         <div class="sidebar">
             
-            <div class="api-key-group">
+            <div class="api-key-box">
                 <label>
                     🔑 Gemini API Key 
-                    <span id="keyStatus" class="saved-badge">已儲存</span>
+                    <span id="keyStatus" class="status-badge">✅ 已儲存</span>
                 </label>
-                <input type="password" id="apiKeyInput" placeholder="貼上您的 API Key (AI Studio)" onchange="saveKey()">
+                <input type="password" id="apiKeyInput" placeholder="請在此貼上 API Key..." oninput="saveKey()">
                 <small style="color:#b91c1c; font-size:12px; margin-top:5px; display:block;">
-                    *此 Key 僅儲存於您的瀏覽器 (Local Storage)，重新整理後無需再輸入。
+                    *輸入後會自動儲存，不用按 Enter。
                 </small>
             </div>
 
             <div class="form-group">
-                <label>🎨 視覺風格 (Visual Style)</label>
+                <label>🎨 視覺風格</label>
                 <select id="styleSelect">
-                    <option value="Cinematic, 35mm lens, golden hour lighting">電影感 (Cinematic Golden Hour)</option>
-                    <option value="Studio Ghibli anime style, hand-painted textures, warm colors">吉卜力動畫 (Ghibli)</option>
-                    <option value="Cyberpunk city, neon rain, futuristic aesthetic">賽博龐克 (Cyberpunk)</option>
-                    <option value="Photorealistic wildlife documentary style, 8k, highly detailed">生態紀錄片 (Documentary)</option>
-                    <option value="Dreamy, ethereal, soft focus, pastel colors">夢幻氛圍 (Dreamy)</option>
+                    <option value="Cinematic, 35mm lens, golden hour">電影感 (Cinematic)</option>
+                    <option value="Studio Ghibli anime style">吉卜力動畫 (Ghibli)</option>
+                    <option value="Cyberpunk, neon lights">賽博龐克 (Cyberpunk)</option>
+                    <option value="Photorealistic, 8k">超寫實攝影 (Photorealistic)</option>
                 </select>
             </div>
 
             <div id="story-inputs">
                 <div class="form-group">
-                    <label>📖 故事大綱 (Story Concept)</label>
-                    <textarea id="storyPrompt" rows="5" placeholder="例如：一隻迷路的小狐狸在雪地裡尋找回家的路..."></textarea>
+                    <label>📖 故事大綱</label>
+                    <textarea id="storyPrompt" rows="5" placeholder="輸入您的故事想法..."></textarea>
                 </div>
-                
                 <div class="form-group">
-                    <label>🔒 主角/場景鎖定 (Consistency Anchor)</label>
-                    <input type="text" id="characterAnchor" placeholder="例如：Cute small red fox with a blue knitted scarf">
+                    <label>🔒 主角鎖定 (重要)</label>
+                    <input type="text" id="characterAnchor" placeholder="例如：Cute red fox with blue scarf">
                 </div>
-
                 <div class="form-group">
-                    <label>📅 生成分鏡數 (Scenes)</label>
+                    <label>📅 分鏡數量</label>
                     <select id="dayCount">
-                        <option value="3">3 個分鏡 (短影音)</option>
-                        <option value="5" selected>5 個分鏡 (標準故事)</option>
-                        <option value="7">7 個分鏡 (完整敘事)</option>
+                        <option value="3">3 個分鏡</option>
+                        <option value="5" selected>5 個分鏡</option>
                     </select>
                 </div>
             </div>
@@ -136,29 +124,26 @@
             <div id="single-inputs" class="hidden">
                 <div class="form-group">
                     <label>🎯 畫面描述</label>
-                    <textarea id="singlePrompt" rows="6" placeholder="描述您想看到的畫面..."></textarea>
+                    <textarea id="singlePrompt" rows="6" placeholder="描述畫面..."></textarea>
                 </div>
             </div>
 
             <div class="form-group">
                 <label>📐 畫幅比例</label>
                 <select id="aspectRatio">
-                    <option value="--ar 9:16">9:16 (直向 - Reels/Tiktok)</option>
-                    <option value="--ar 16:9">16:9 (橫向 - YouTube)</option>
-                    <option value="--ar 1:1">1:1 (正方形 - Instagram)</option>
+                    <option value="--ar 9:16">9:16 (直向)</option>
+                    <option value="--ar 16:9">16:9 (橫向)</option>
                 </select>
             </div>
 
-            <button class="btn-primary" onclick="generateScript()">✨ 開始生成完整素材</button>
+            <button class="btn-primary" onclick="generateScript()">✨ 開始生成</button>
         </div>
 
         <div class="main-content">
-            <div id="loading" class="loading">
-                🤖 AI 正在身兼多職中...<br>構思劇本、想標題、找 Hashtag...<br>請稍候...
-            </div>
+            <div id="loading" class="loading">AI 正在生成中...</div>
             <div id="results-container">
-                <div style="color: #9ca3af; text-align: center; padding-top: 150px; font-size: 1.2rem;">
-                    👈 請先貼上 API Key<br>輸入故事並點擊生成
+                <div style="text-align: center; color: #999; margin-top: 100px;">
+                    請在左側紅色框框貼上 API Key<br>然後輸入故事並點擊生成
                 </div>
             </div>
         </div>
@@ -166,26 +151,24 @@
 </div>
 
 <script>
-    // 固定的互動引導語
-    const CTA_PHRASE = "\n\nIf you have a story you want to see, please leave a comment and let me know! I will consider turning your text into the main storyline!";
+    const CTA_PHRASE = "\n\nIf you have a story you want to see, leave a comment!";
     let currentMode = 'story';
 
-    // 🟢 初始化：檢查是否有儲存的 API Key
+    // 🟢 初始化：檢查 Key
     window.onload = function() {
-        const savedKey = localStorage.getItem("gemini_api_key");
+        const savedKey = localStorage.getItem("gemini_api_key_v3");
         if (savedKey) {
             document.getElementById("apiKeyInput").value = savedKey;
             document.getElementById("keyStatus").style.display = "inline-block";
         }
     }
 
-    // 🟢 儲存 Key 到 LocalStorage
+    // 🟢 自動儲存 Key
     function saveKey() {
         const key = document.getElementById("apiKeyInput").value.trim();
         if (key) {
-            localStorage.setItem("gemini_api_key", key);
+            localStorage.setItem("gemini_api_key_v3", key); // 使用新的 key 名稱避免衝突
             document.getElementById("keyStatus").style.display = "inline-block";
-            document.getElementById("keyStatus").innerText = "已儲存";
         }
     }
 
@@ -198,81 +181,56 @@
     }
 
     async function generateScript() {
-        // 1. 從輸入框獲取 Key，而不是從程式碼寫死
         const API_KEY = document.getElementById("apiKeyInput").value.trim();
-
         if (!API_KEY) {
-            alert("🚨 請先在左上角的紅色框框中貼上您的 Google Gemini API KEY！");
+            alert("🚨 請先在左上角的紅色區域輸入 API Key！");
             document.getElementById("apiKeyInput").focus();
             return;
         }
 
         const container = document.getElementById('results-container');
         const loader = document.getElementById('loading');
-        const style = document.getElementById('styleSelect').value;
-        const ratio = document.getElementById('aspectRatio').value;
         
         container.innerHTML = '';
         loader.style.display = 'block';
 
+        const style = document.getElementById('styleSelect').value;
+        const ratio = document.getElementById('aspectRatio').value;
         let prompt = "";
 
         if (currentMode === 'story') {
             const story = document.getElementById('storyPrompt').value;
             const anchor = document.getElementById('characterAnchor').value;
             const days = document.getElementById('dayCount').value;
-            
-            if(!story) { alert("請輸入故事大綱"); loader.style.display='none'; return; }
+            if(!story) { alert("請輸入故事"); loader.style.display='none'; return; }
 
             prompt = `
-                Role: Expert Video Director & Social Media Strategist.
-                Task: Create a complete social media video post package for a ${days}-part story.
-
-                Input Data:
-                - Story Concept: "${story}"
-                - Visual Style: "${style}"
-                - Consistency Anchor (MUST be included in every scene prompt): "${anchor}"
-                - Aspect Ratio: "${ratio}"
-
-                Required Outputs:
-                1.  **Titles:** One catchy title in English, one in Traditional Chinese.
-                2.  **Hashtags:** 5-8 relevant hashtags (mixed EN/ZH).
-                3.  **Scene Prompts:** ${days} detailed video generation prompts. Each must include camera, lighting, and the anchor description.
-
-                **STRICT OUTPUT FORMAT:**
+                Role: Video Director.
+                Task: Create a ${days}-part video prompt series.
+                Story: "${story}"
+                Style: "${style}"
+                Anchor: "${anchor}"
+                
+                STRICT FORMAT:
                 ---TITLE_EN---
-                (English Title)
+                (Title)
                 ---TITLE_ZH---
                 (中文標題)
                 ---HASHTAGS---
-                (#tags...)
+                (#tags)
                 ---SCENE 1---
-                (Detailed prompt for scene 1...)
+                (Prompt 1...)
                 ---SCENE 2---
-                (Detailed prompt for scene 2...)
+                (Prompt 2...)
             `;
         } else {
             const single = document.getElementById('singlePrompt').value;
-            if(!single) { alert("請輸入畫面描述"); loader.style.display='none'; return; }
-            prompt = `
-                Role: Expert Video Director & Social Media Strategist.
-                Task: Expand description into a video prompt and generate social media metadata.
-                Input: "${single}" | Style: "${style}" | Ratio: "${ratio}"
-
-                **STRICT OUTPUT FORMAT:**
-                ---TITLE_EN---
-                (Catchy English Title)
-                ---TITLE_ZH---
-                (吸睛中文標題)
-                ---HASHTAGS---
-                (#tags...)
-                ---SCENE 1---
-                (Detailed expanded video prompt, including style and ${ratio} at the end.)
-            `;
+            if(!single) { alert("請輸入描述"); loader.style.display='none'; return; }
+            prompt = `Task: Expand video prompt. Input: "${single}". Style: "${style}". Format: ---TITLE_EN--- ... ---SCENE 1--- ...`;
         }
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${API_KEY}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
@@ -280,74 +238,44 @@
 
             const data = await response.json();
             if (data.error) throw new Error(data.error.message);
-            const rawText = data.candidates[0].content.parts[0].text;
-            renderNewResults(rawText);
+            renderResults(data.candidates[0].content.parts[0].text);
 
         } catch (error) {
-            console.error(error);
-            container.innerHTML = `<div style="color:#ef4444; padding: 20px; background: #fee2e2; border-radius: 10px;">🚨 生成失敗: ${error.message}<br>請檢查 API Key 是否正確。</div>`;
+            container.innerHTML = `<div style="color:red; padding:20px;">錯誤: ${error.message}</div>`;
         } finally {
             loader.style.display = 'none';
         }
     }
 
-    function renderNewResults(text) {
+    function renderResults(text) {
         const container = document.getElementById('results-container');
         
-        const titleEnMatch = text.match(/---TITLE_EN---\s*([\s\S]*?)\s*---TITLE_ZH---/);
-        const titleZhMatch = text.match(/---TITLE_ZH---\s*([\s\S]*?)\s*---HASHTAGS---/);
-        const hashtagsMatch = text.match(/---HASHTAGS---\s*([\s\S]*?)\s*(---SCENE 1---|$)/);
+        // 簡單解析邏輯
+        const titleEn = (text.match(/---TITLE_EN---\s*([\s\S]*?)\s*---TITLE_ZH---/) || [])[1] || "Generating...";
+        const titleZh = (text.match(/---TITLE_ZH---\s*([\s\S]*?)\s*---HASHTAGS---/) || [])[1] || "...";
+        const hashtags = (text.match(/---HASHTAGS---\s*([\s\S]*?)\s*(---SCENE 1---|$)/) || [])[1] || "";
 
-        const titleEn = titleEnMatch ? titleEnMatch[1].trim() : "Generating...";
-        const titleZh = titleZhMatch ? titleZhMatch[1].trim() : "生成中...";
-        const hashtags = hashtagsMatch ? hashtagsMatch[1].trim() : "";
-
-        const metaBox = document.createElement('div');
-        metaBox.className = 'meta-info-box';
-        metaBox.innerHTML = `
-            <div style="margin-bottom: 15px;">
-                <div class="meta-title">📺 英文標題 <button class="copy-btn" style="font-size:11px; padding: 3px 8px;" onclick="copyToClipboard(this, \`${titleEn}\`)">複製</button></div>
-                <div class="meta-content">${titleEn}</div>
-            </div>
-             <div style="margin-bottom: 15px;">
-                <div class="meta-title">🧧 中文標題 <button class="copy-btn" style="font-size:11px; padding: 3px 8px;" onclick="copyToClipboard(this, \`${titleZh}\`)">複製</button></div>
-                <div class="meta-content">${titleZh}</div>
-            </div>
-            <div>
-                <div class="meta-title">🏷️ Hashtags <button class="copy-btn" style="font-size:11px; padding: 3px 8px;" onclick="copyToClipboard(this, \`${hashtags}\`)">複製</button></div>
-                <div class="hashtags">${hashtags}</div>
+        container.innerHTML += `
+            <div class="output-card" style="background:#eef2ff;">
+                <h3>📺 ${titleZh} <br><small>${titleEn}</small></h3>
+                <p style="color:#6366f1">${hashtags}</p>
             </div>
         `;
-        container.appendChild(metaBox);
 
         const scenes = text.split(/---SCENE \d+---/).slice(1);
-        if (scenes.length === 0 && currentMode === 'single') {
-             const singleSceneMatch = text.match(/---SCENE 1---\s*([\s\S]*)/);
-             if(singleSceneMatch) scenes.push(singleSceneMatch[1]);
-        }
-
-        scenes.forEach((sceneText, index) => {
-            const finalPromptText = sceneText.trim() + CTA_PHRASE;
-            const dayNum = index + 1;
-            const card = document.createElement('div');
-            card.className = 'output-card';
-            card.innerHTML = `
-                <div class="output-header">
-                    <span class="day-badge">${currentMode === 'story' ? 'Scene ' + dayNum : 'Single Shot'}</span>
-                    <button class="copy-btn" onclick="copyToClipboard(this, \`${finalPromptText.replace(/`/g, "\\`")}\`)">📋 複製完整提示詞 (含 CTA)</button>
+        scenes.forEach((scene, idx) => {
+            const content = scene.trim() + CTA_PHRASE;
+            container.innerHTML += `
+                <div class="output-card">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <span style="background:#6366f1; color:white; padding:2px 8px; border-radius:10px;">Scene ${idx+1}</span>
+                        <button class="copy-btn" onclick="navigator.clipboard.writeText(\`${content.replace(/`/g, "\\`")}\`);alert('已複製')">複製</button>
+                    </div>
+                    <div class="prompt-text">${scene.trim()}</div>
+                    <div style="margin-top:10px; font-size:12px; color:#666;">👇 結尾已自動加入互動語</div>
                 </div>
-                <div class="prompt-text">${sceneText.trim()}</div>
-                <div class="cta-text">👇 已自動附加於結尾：<br>${CTA_PHRASE.trim()}</div>
             `;
-            container.appendChild(card);
         });
-    }
-
-    function copyToClipboard(btn, text) {
-        navigator.clipboard.writeText(text);
-        const originalText = btn.innerHTML;
-        btn.innerHTML = "✅ 已複製！";
-        setTimeout(() => btn.innerHTML = originalText, 2000);
     }
 </script>
 
